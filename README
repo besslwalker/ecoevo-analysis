@@ -1,0 +1,94 @@
+Workflow for generating data and graphs:
+
+EXPERIMENT				SEEDS				ENVIRONMENT
+unlimited-base		1000-1199		environment-nature.cfg
+limited-base		2000-2199		environment-nature-9resource.cfg
+severe-base			3000-3199		environment-nature-9resource-low.cfg
+unlimited-21		4000-4199		environment-nature-21.cfg
+limited-21			5000-5199		environment-nature-9resource-21.cfg
+unlimited-81		6000-6199		environment-nature-81.cfg
+limited-81			7000-7199		environment-nature-9resource-81.cfg
+unlimited-3task		8000-8199		environment-nature-3taskcap.cfg
+limited-3task		9000-9199		environment-nature-9resource-3taskcap.cfg
+severe-3task		10000-10199		environment-nature-9resource-low-3taskcap.cfg
+unlimited-noEQU		11000-11199		environment-nature-noEQU.cfg
+limited-noEQU		12000-12199		environment-nature-9resource-noEQU.cfg
+severe-noEQU		13000-13199		environment-nature-9resource-low-noEQU.cfg
+unlimited-noloss	14000-14199		environment-nature.cfg
+limited-noloss	  	15000-15199		environment-nature-9resource.cfg
+
+1. Generate a list of the genotype ids of the final dominant EQU-achieving genotypes:
+
+Set the variables in the analyze-domEQUid.cfg analyze script:
+- h is your home directory
+- x is the name of the experiment directory
+- r is the run prefix
+- s is the starting seed
+- e is the ending seed
+
+You want to use the unlimited version of the environment for this step -- so both unlimited-21 and limited-21 are evaluated with environment-nature-21.cfg, etc.  This allows the evaluation to use the correct task rewards.
+
+Then run Avida:
+
+> cd config
+> ./avida-scarcity_evo -a -c avida-nature.cfg -set ANALYZE_FILE analyze-domEQUid.cfg -set ENVIRONMENT_FILE <correct environment file>
+
+2. Run linanalyze_generator.py:
+
+> python linanalyze_generator.py <experiment-name>
+
+i.e. python linanalyze_generator.py unlimited-base
+
+3. Generate final dominant EQU-achieving lineages:
+
+Again, you want to use the unlimited (not 9resource or 9resource-low) version of the environment.
+
+> cd config
+> ./avida-scarcity_evo -a -c avida-nature.cfg -set ANALYZE_FILE analyze-lin-<experiment_name>.cfg -set ENVIRONMENT_FILE <correct environment file>
+
+4. Generate _taskinfo.dat files by running taskstat_generator.py:
+
+> python taskstat_generator.py <output_prefix> <runs>
+
+e.g. python taskstat_generator.py unlimited-base unlimited-base_1*
+
+5. Generate analyze files for phenotype generation:
+
+> python phenanalyze_generator.py <experiment_name>
+
+i.e. python phenanalyze_generator.py unlimited-base
+
+6. Generate phenotype files by running Avida:
+
+> cd config
+> ./avida-scarcity_evo -a -c avida-nature.cfg -set ANALYZE_FILE analyze-phen-<experiment_name>.cfg -set ENVIRONMENT_FILE <correct environment file>
+
+e.g.
+> ./avida-scarcity_evo -a -c avida-nature.cfg -set ANALYZE_FILE analyze-phen-unlimited-base.cfg -set ENVIRONMENT_FILE environment-nature.cfg
+
+7. Generate _phentropyinfo.dat files by running phentropy_generator.py:
+
+> python phentropy_generator.py <experiment_name>
+
+i.e. python phentropy_generator.py unlimited-base
+
+You will also want the phenotypic entropy of the viable-only genotypes:
+
+> python phentropy_generator.py -f <experiment_name>
+
+8. View basic numbers and statistics through ecoevo_stats.py:
+
+> python ecoevo_stats.py -e1 <first_experiment> -e2 <second_experiment>
+
+e.g. python ecoevo_stats.py -e1 unlimited-base -e2 limited-base
+
+9. Generate graphs with ecoevo_graphs.py:
+
+> python ecoevo_graphs.py -e1 <first_experiment> -e2 <second_experiment>
+
+10. For each pair of experiments in which a value taken from a certain update was compared with a nonparametric test, run tiecheck.py; report the results in methods/supplementary results.  (This turns out to be just unlimited-base and limited-base, for the phenotypic diversity at first EQU and EQU fixation.)
+
+> python tiecheck.py -f1 <first_experiment>_taskinfo.dat -f2 <second_experiment>_taskinfo.dat
+
+i.e. python tiecheck.py -f1 unlimited-base_taskinfo.dat -f2 limited-base_taskinfo.dat
+ 
